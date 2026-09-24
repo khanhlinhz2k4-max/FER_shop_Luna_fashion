@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { products } from '../data/products';
 import { 
@@ -10,21 +10,63 @@ import {
   Truck, 
   RotateCcw, 
   ArrowLeft,
-  Check
+  Check,
+  Minus,
+  Plus,
+  Zap
 } from 'lucide-react';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const product = products.find(p => p.id === parseInt(id)) || products[0];
 
+  const stock = product.stock ?? 12;
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || 'S');
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || '#775B3F');
   const [activeImage, setActiveImage] = useState(product.image);
+  const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+
+  const handleIncreaseQuantity = () => {
+    if (quantity < stock) {
+      setQuantity(prev => prev + 1);
+    }
+  };
+
+  const handleDecreaseQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(prev => prev - 1);
+    }
+  };
 
   const handleAddToBag = () => {
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2500);
+  };
+
+  const handleBuyNow = () => {
+    const buySubtotal = product.price * quantity;
+    const shipping = buySubtotal > 250 ? 0 : 25;
+    const total = buySubtotal + shipping;
+
+    navigate('/checkout', {
+      state: {
+        items: [
+          {
+            ...product,
+            quantity,
+            size: selectedSize,
+            color: selectedColor
+          }
+        ],
+        subtotal: buySubtotal,
+        shipping,
+        discountAmount: 0,
+        appliedVoucher: null,
+        total
+      }
+    });
   };
 
   return (
@@ -130,29 +172,84 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Actions */}
+            {/* Quantity Selector & Stock Availability Indicator */}
+            <div className="pdp-option-group pdp-quantity-group">
+              <div className="option-label-row">
+                <span className="option-label">Quantity:</span>
+                {/* Stock Status Badge */}
+                <div className="pdp-stock-status">
+                  {stock > 5 ? (
+                    <span className="stock-badge in-stock">
+                      <span className="stock-dot" />
+                      In Stock ({stock} available)
+                    </span>
+                  ) : stock > 0 ? (
+                    <span className="stock-badge low-stock">
+                      <span className="stock-dot pulse" />
+                      Low Stock: Only {stock} left!
+                    </span>
+                  ) : (
+                    <span className="stock-badge out-of-stock">
+                      <span className="stock-dot" />
+                      Out of Stock
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="pdp-quantity-counter">
+                <button
+                  type="button"
+                  className="qty-btn"
+                  onClick={handleDecreaseQuantity}
+                  disabled={quantity <= 1 || stock === 0}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus size={15} />
+                </button>
+                <span className="qty-value">{quantity}</span>
+                <button
+                  type="button"
+                  className="qty-btn"
+                  onClick={handleIncreaseQuantity}
+                  disabled={quantity >= stock || stock === 0}
+                  aria-label="Increase quantity"
+                >
+                  <Plus size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* Actions: ADD TO BAG & BUY NOW */}
             <div className="pdp-actions-row">
               <button 
                 type="button" 
                 className={`pdp-add-btn ${isAdded ? 'added' : ''}`}
                 onClick={handleAddToBag}
+                disabled={stock === 0}
               >
                 {isAdded ? (
                   <>
                     <Check size={18} />
-                    <span>ADDED TO BAG</span>
+                    <span>ADDED {quantity > 1 ? `${quantity} ITEMS ` : ''}TO BAG</span>
                   </>
                 ) : (
                   <>
                     <ShoppingBag size={18} />
-                    <span>ADD TO BAG — ${product.price}</span>
+                    <span>ADD TO BAG</span>
                   </>
                 )}
               </button>
 
-              <Link to="/cart" className="pdp-checkout-link">
-                View Bag
-              </Link>
+              <button
+                type="button"
+                className="pdp-buy-now-btn"
+                onClick={handleBuyNow}
+                disabled={stock === 0}
+              >
+                <Zap size={17} />
+                <span>BUY NOW — ${product.price * quantity}</span>
+              </button>
             </div>
 
             {/* Guarantees */}
