@@ -145,24 +145,14 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div className="form-row-two">
-                    <div className="form-group">
-                      <label>Phone Number</label>
-                      <input 
-                        type="tel" 
-                        value={profile.phone} 
-                        onChange={(e) => setProfile({...profile, phone: e.target.value})}
-                        className="form-input" 
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Preferred Language</label>
-                      <select className="form-input">
-                        <option value="en">English (US / International)</option>
-                        <option value="fr">Français (France)</option>
-                        <option value="vi">Tiếng Việt</option>
-                      </select>
-                    </div>
+                  <div className="form-group">
+                    <label>Phone Number</label>
+                    <input 
+                      type="tel" 
+                      value={profile.phone} 
+                      onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                      className="form-input" 
+                    />
                   </div>
 
                   <button type="submit" className="save-profile-btn">
